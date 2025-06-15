@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paragraph Completion Challenge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1c20 0%, #2d3436 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            color: #fff;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 184, 148, 0.1) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 25px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            width: 90%;
+            max-width: 800px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+            animation: containerAppear 0.6s ease-out;
+            margin: 40px auto 32px auto;
+            max-height: 90vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        @keyframes containerAppear {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.8rem 1.2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .stat-item:hover::before {
+            left: 100%;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 2.8rem;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+            letter-spacing: 1px;
+            animation: titleGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); }
+            50% { text-shadow: 0 2px 20px rgba(0, 184, 148, 0.5); }
+        }
+
+        .paragraph-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            position: relative;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .paragraph-container.hidden {
+            display: none;
+        }
+
+        .question-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sentence-prompt {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            line-height: 1.6;
+            animation: textPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 1.2rem;
+            font-size: 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #00b894;
+            box-shadow: 0 0 20px rgba(0, 184, 148, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .check-btn, .next-btn, .start-btn {
+            padding: 1.2rem;
+            font-size: 1.2rem;
+            background: linear-gradient(45deg, #00b894, #00a884);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .check-btn::before, .next-btn::before, .start-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .check-btn:hover::before, .next-btn:hover::before, .start-btn:hover::before {
+            left: 100%;
+        }
+
+        .check-btn:hover, .next-btn:hover, .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 184, 148, 0.4);
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 1.2rem;
+            min-height: 2rem;
+            padding: 1.2rem;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: feedbackAppear 0.3s ease-out;
+        }
+
+        @keyframes feedbackAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, rgba(0, 184, 148, 0.3) 0%, rgba(0, 184, 148, 0.1) 100%);
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 184, 148, 0.2);
+            animation: highlightPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes highlightPulse {
+            0%, 100% { background: linear-gradient(120deg, rgba(0, 184, 148, 0.3) 0%, rgba(0, 184, 148, 0.1) 100%); }
+            50% { background: linear-gradient(120deg, rgba(0, 184, 148, 0.4) 0%, rgba(0, 184, 148, 0.2) 100%); }
+        }
+
+        .paragraph-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 1.2rem;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            margin-bottom: 1.5rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .paragraph-input:focus {
+            outline: none;
+            border-color: #00b894;
+            box-shadow: 0 0 20px rgba(0, 184, 148, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, rgba(0, 184, 148, 0.95), rgba(0, 168, 132, 0.95));
+            color: white;
+            padding: 2rem 3rem;
+            border-radius: 20px;
+            font-size: 2.2rem;
+            animation: popupAppear 0.5s ease-out;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 184, 148, 0.4);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        @keyframes popupAppear {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .game-section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .game-section.active {
+            display: block;
+        }
+
+        /* Add Google Font */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        /* Add floating particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(0, 184, 148, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="game-container">
+        <h1>Paragraph Completion Challenge</h1>
+        
+        <div id="setupSection" class="game-section active">
+            <div class="paragraph-container">
+                <textarea class="paragraph-input" id="paragraphInput" placeholder="Write your paragraph here..."></textarea>
+            </div>
+            <button class="start-btn" id="startBtn">Start Game</button>
+        </div>
+
+        <div id="gameSection" class="game-section">
+            <div class="game-header">
+                <div class="stats">
+                    <div class="stat-item">
+                        <span>Score:</span>
+                        <span id="score">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Streak:</span>
+                        <span id="streak">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="paragraph-container" id="paragraph"></div>
+            <div class="question-container">
+                <div class="sentence-prompt" id="sentencePrompt"></div>
+                <div class="input-container">
+                    <input type="text" class="answer-input" id="answerInput" placeholder="Type the next words...">
+                    <button class="check-btn" id="checkBtn">Check</button>
+                </div>
+                <div class="feedback" id="feedback"></div>
+                <button class="next-btn" id="nextBtn" style="display: none;">Next Sentence</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup" id="correctPopup">Correct! 🎉</div>
+
+    <script>
+        let currentParagraph = '';
+        let currentSentence = '';
+        let remainingText = '';
+        let score = 0;
+        let streak = 0;
+
+        function updateUI() {
+            document.getElementById('score').textContent = Math.round(score);
+            document.getElementById('streak').textContent = streak;
+        }
+
+        function splitIntoSentences(text) {
+            return text.match(/[^.!?]+[.!?]+/g) || [];
+        }
+
+        function showNewParagraph() {
+            currentParagraph = document.getElementById('paragraphInput').value;
+            const sentences = splitIntoSentences(currentParagraph);
+            if (sentences.length === 0) {
+                alert('Please write at least one sentence!');
+                return;
+            }
+            
+            document.getElementById('paragraph').innerHTML = currentParagraph;
+            showNextSentence();
+        }
+
+        function showNextSentence() {
+            const sentences = splitIntoSentences(currentParagraph);
+            const randomIndex = Math.floor(Math.random() * sentences.length);
+            currentSentence = sentences[randomIndex];
+            
+            // Split the sentence into two parts, but ensure at least 2 words in each part
+            const words = currentSentence.split(' ');
+            if (words.length < 4) {
+                // If sentence is too short, just split it in half
+                const splitPoint = Math.floor(words.length / 2);
+                const firstPart = words.slice(0, splitPoint).join(' ');
+                const secondPart = words.slice(splitPoint).join(' ');
+                
+                document.getElementById('sentencePrompt').innerHTML = 
+                    `<span class="highlight">${firstPart}</span> ...`;
+            } else {
+                // For longer sentences, take first 4-6 words
+                const firstPart = words.slice(0, Math.min(6, Math.floor(words.length * 0.7))).join(' ');
+                const secondPart = words.slice(Math.min(6, Math.floor(words.length * 0.7))).join(' ');
+                
+                document.getElementById('sentencePrompt').innerHTML = 
+                    `<span class="highlight">${firstPart}</span> ...`;
+            }
+            
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').focus();
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('nextBtn').style.display = 'none';
+        }
+
+        function showCorrectPopup() {
+            const popup = document.getElementById('correctPopup');
+            popup.style.display = 'block';
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 1500);
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
+            const words = currentSentence.split(' ');
+            const splitPoint = Math.min(6, Math.floor(words.length * 0.7));
+            const correctAnswer = words.slice(splitPoint).join(' ').toLowerCase();
+            const questionPart = words.slice(0, splitPoint).join(' ').toLowerCase();
+            
+            const feedback = document.getElementById('feedback');
+            const nextBtn = document.getElementById('nextBtn');
+
+            // Check if the answer exists in the paragraph
+            if (!currentParagraph.toLowerCase().includes(userAnswer)) {
+                feedback.textContent = 'Your answer must be part of the paragraph!';
+                feedback.style.color = '#f44336';
+                streak = 0;
+                nextBtn.style.display = 'block';
+                updateUI();
+                return;
+            }
+
+            // Check if the answer appears before the question in the paragraph
+            const questionIndex = currentParagraph.toLowerCase().indexOf(questionPart);
+            const answerIndex = currentParagraph.toLowerCase().indexOf(userAnswer);
+            if (answerIndex < questionIndex) {
+                feedback.textContent = 'Your answer cannot appear before the question!';
+                feedback.style.color = '#f44336';
+                streak = 0;
+                nextBtn.style.display = 'block';
+                updateUI();
+                return;
+            }
+
+            // Check if the answer continues from the question
+            const expectedStartIndex = questionIndex + questionPart.length;
+            if (answerIndex > expectedStartIndex + 10) { // Allow some flexibility (10 characters)
+                feedback.textContent = 'Your answer must continue from the question!';
+                feedback.style.color = '#f44336';
+                streak = 0;
+                nextBtn.style.display = 'block';
+                updateUI();
+                return;
+            }
+
+            // Check if the input includes the correct answer
+            const userWords = userAnswer.split(' ');
+            const correctWords = correctAnswer.split(' ');
+            const matchingWords = userWords.filter(word => correctWords.includes(word));
+            const minMatchingWords = Math.min(2, Math.ceil(correctWords.length * 0.4));
+
+            // Check if the input contains enough matching words from the correct answer
+            if (matchingWords.length >= minMatchingWords || userAnswer.length >= correctAnswer.length * 0.5) {
+                feedback.textContent = 'Correct! 🎉';
+                feedback.style.color = '#4CAF50';
+                score += 10 * (1 + (streak * 0.1));
+                streak++;
+                showCorrectPopup();
+                
+                // Automatically move to next question after a short delay
+                setTimeout(() => {
+                    showNextSentence();
+                }, 1500);
+            } else {
+                feedback.textContent = `Incorrect! The correct answer was: "${correctAnswer}"`;
+                feedback.style.color = '#f44336';
+                streak = 0;
+                nextBtn.style.display = 'block';
+            }
+
+            updateUI();
+        }
+
+        function startGame() {
+            const paragraph = document.getElementById('paragraphInput').value.trim();
+            if (paragraph.length < 10) {
+                alert('Please write at least 10 characters!');
+                return;
+            }
+            
+            document.getElementById('setupSection').classList.remove('active');
+            document.getElementById('gameSection').classList.add('active');
+            showNewParagraph();
+            
+            // Hide the paragraph after a short delay
+            setTimeout(() => {
+                document.getElementById('paragraph').classList.add('hidden');
+            }, 3000);
+        }
+
+        // Event Listeners
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+        document.getElementById('nextBtn').addEventListener('click', () => showNextSentence());
+        document.getElementById('answerInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Initialize UI
+        updateUI();
+
+        // Add particle animation
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 5) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Initialize particles
+        createParticles();
+    </script>
+</body>
+</html>
