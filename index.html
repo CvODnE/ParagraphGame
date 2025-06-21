@@ -574,6 +574,112 @@
             box-shadow: 0 6px 20px rgba(0, 184, 148, 0.5);
         }
 
+        #micBtn {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(45deg, #00b894, #00a884);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        #micBtn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+        }
+
+        #micBtn.is-listening {
+            background: linear-gradient(45deg, #d63031, #b71c1c);
+            animation: pulseMic 1.5s infinite ease-out;
+        }
+
+        @keyframes pulseMic {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 15px rgba(214, 48, 49, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(214, 48, 49, 0);
+            }
+        }
+
+        #micBtn svg {
+            width: 60%;
+            height: 60%;
+            stroke: white;
+            pointer-events: none;
+        }
+
+        .mic-btn-answer {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            background: linear-gradient(45deg, #00b894, #00a884);
+            border: none;
+            color: white;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .mic-btn-answer:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .mic-btn-answer.is-listening {
+            background: linear-gradient(45deg, #d63031, #b71c1c);
+            animation: pulseMicAnswer 1.5s infinite ease-out;
+        }
+
+        @keyframes pulseMicAnswer {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 15px rgba(214, 48, 49, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(214, 48, 49, 0);
+            }
+        }
+
+        .mic-btn-answer svg {
+            width: 60%;
+            height: 60%;
+            stroke: white;
+            pointer-events: none;
+        }
+
+        .answer-input {
+            padding-right: 55px !important;
+        }
+
         /* Option button selected animation */
         .option-btn-selectable.selected {
             background: linear-gradient(90deg,#00b894 60%,#00a884 100%) !important;
@@ -702,7 +808,8 @@
         
         <div id="setupSection" class="game-section active">
             <div class="paragraph-container">
-                <textarea class="paragraph-input" id="paragraphInput" placeholder="Write your paragraph here..."></textarea>
+                <textarea class="paragraph-input" id="paragraphInput" placeholder="Write your paragraph here, or use the mic to dictate..."></textarea>
+                <button id="micBtn" title="Use Voice-to-Text"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></button>
             </div>
             <button class="start-btn" id="startBtn">Start Game</button>
         </div>
@@ -712,7 +819,10 @@
             <div class="question-container">
                 <div class="sentence-prompt" id="sentencePrompt"></div>
                 <div class="input-container" id="inputContainer" style="display: flex; flex-direction: column; gap: 1.2rem;">
-                    <input type="text" class="answer-input" id="answerInput" placeholder="Type the next words...">
+                    <div style="position: relative;">
+                        <input type="text" class="answer-input" id="answerInput" placeholder="Type or dictate the next words...">
+                        <button id="answerMicBtn" title="Dictate Answer" class="mic-btn-answer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></button>
+                    </div>
                     <button class="check-btn" id="checkBtn">Check</button>
                 </div>
                 <div class="input-container" id="optionsContainer" style="display: none; flex-direction: column; gap: 1rem;">
@@ -1052,6 +1162,127 @@
 
         // Call setInitialAnswerMode on page load
         setInitialAnswerMode();
+
+        // --- Voice to Text ---
+        const paragraphMicBtn = document.getElementById('micBtn');
+        const paragraphInput = document.getElementById('paragraphInput');
+        const answerMicBtn = document.getElementById('answerMicBtn');
+        const answerInput = document.getElementById('answerInput');
+        
+        const micIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
+        const soundIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        let paragraphRecognition, answerRecognition;
+        let isParagraphListening = false;
+        let isAnswerListening = false;
+
+        if (SpeechRecognition) {
+            // --- Paragraph Recognition Setup ---
+            paragraphRecognition = new SpeechRecognition();
+            paragraphRecognition.continuous = true;
+            paragraphRecognition.lang = 'en-US';
+            paragraphRecognition.interimResults = false;
+
+            paragraphMicBtn.addEventListener('click', () => {
+                if (isAnswerListening) answerRecognition.stop();
+                if (isParagraphListening) {
+                    paragraphRecognition.stop();
+                } else {
+                    paragraphRecognition.start();
+                }
+            });
+
+            paragraphRecognition.onstart = () => {
+                isParagraphListening = true;
+                paragraphInput.placeholder = "Listening...";
+                paragraphMicBtn.classList.add('is-listening');
+                paragraphMicBtn.innerHTML = soundIconSVG;
+            };
+
+            paragraphRecognition.onend = () => {
+                isParagraphListening = false;
+                paragraphInput.placeholder = "Write your paragraph here, or use the mic to dictate...";
+                paragraphMicBtn.classList.remove('is-listening');
+                paragraphMicBtn.innerHTML = micIconSVG;
+            };
+
+            paragraphRecognition.onerror = (event) => {
+                console.error("Paragraph speech recognition error", event.error);
+                isParagraphListening = false;
+                paragraphInput.placeholder = "Mic error. Please try again.";
+                paragraphMicBtn.classList.remove('is-listening');
+                paragraphMicBtn.innerHTML = micIconSVG;
+            };
+
+            paragraphRecognition.onresult = (event) => {
+                let newTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        newTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                if (newTranscript) {
+                    const currentText = paragraphInput.value;
+                    const separator = currentText.trim() === '' ? '' : ' ';
+                    let formattedTranscript = newTranscript.trim();
+                    if (currentText.trim() === '') {
+                        formattedTranscript = formattedTranscript.charAt(0).toUpperCase() + formattedTranscript.slice(1);
+                    }
+                    paragraphInput.value += separator + formattedTranscript + '. ';
+                }
+            };
+
+            // --- Answer Recognition Setup ---
+            answerRecognition = new SpeechRecognition();
+            answerRecognition.continuous = false;
+            answerRecognition.lang = 'en-US';
+            answerRecognition.interimResults = false;
+
+            answerMicBtn.addEventListener('click', () => {
+                if (isParagraphListening) paragraphRecognition.stop();
+                if (isAnswerListening) {
+                    answerRecognition.stop();
+                } else {
+                    answerRecognition.start();
+                }
+            });
+
+            answerRecognition.onstart = () => {
+                isAnswerListening = true;
+                answerInput.placeholder = "Listening for answer...";
+                answerMicBtn.classList.add('is-listening');
+                answerMicBtn.innerHTML = soundIconSVG;
+            };
+
+            answerRecognition.onend = () => {
+                isAnswerListening = false;
+                answerInput.placeholder = "Type or dictate the next words...";
+                answerMicBtn.classList.remove('is-listening');
+                answerMicBtn.innerHTML = micIconSVG;
+            };
+
+            answerRecognition.onerror = (event) => {
+                console.error("Answer speech recognition error", event.error);
+                isAnswerListening = false;
+                answerInput.placeholder = "Mic error. Try again.";
+                answerMicBtn.classList.remove('is-listening');
+                answerMicBtn.innerHTML = micIconSVG;
+            };
+
+            answerRecognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                answerInput.value = transcript.trim();
+                // Optional: checkAnswer(); // You could automatically check the answer
+            };
+
+        } else {
+            console.log('Speech Recognition API not supported in this browser.');
+            paragraphMicBtn.style.display = 'none';
+            answerMicBtn.style.display = 'none';
+        }
     </script>
 </body>
 </html>
